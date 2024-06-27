@@ -87,4 +87,29 @@
 the --add-host will add the ip to the `/etc/hosts` file so you will be able to access it.
 
 # docker networking.
+- docker mainly has 3 network connections type.
+    1. bridge (default) (the docker0 virtual interface `ip link show | grep docker0`), the default ip address for the interface is `172.17.0.1` so each time you will create a new container it will follow this ip range `172.17.0.1 : 172.17.225.225`
+    2. host
+    3. none
+
+- each time your create a new container a new adapter is created on the host machine (veth[some random values])
+- each container contains 2 adapters (lo (loopback) and eth0) the eth0 adapter is forwared to the outer world on the host machine using the veth adapter which is automatically created every time you create a new container and connect it to the `bridge network`
+
+- `docker container run -dit/-it --name alp3 --network [network type] alpine`
+- this will create a container and attach it to a newtork type ... if we used the none network type this will make our container completley isolated from the outer world (it will have only the lo adapter)
+
+- the `host` network is a special case network type ... if we created a container with a network type host `docker container run -it /-dit --name alp4 --network host alpine:latest` it will make our container exposed on the host.. actually that container will act that he's the host itself as it will grant all adapters of the host , with the same hostname...etc
+
+- why? ... in case you have an application with many open ports , you can create a container with the host network to access all thies ports from the host without need to forward each port to the host machine.
+
+# drivers
+- there's 3 drivers on the host machine that deals with containers networking.
+    1. bridge (single host containers) (NAT on windows)
+    2. macvlan (multi-host containers) (acts like a physical device and the outer people will see the MAC address , to do so you need to follow the `promiscuous mode`)
+    3. overlay (containers on different machines)
+- `docker network create mynet` = creates a custom network (the driver will be bridge)
+- `docker network connect mynet alp1` = connects a container to a network
+- `docker network create --subnet 10.0.0.0/16 mynet2` = creates a newtork with a specific subnet mask
+- `docker network disconnect mynet alp1` = disconnects the container from the network.
+- `docker network create --internal mynet3` = creates an internal network (the containers will be able to see eachother but they will be isolated from the outer world) (usually for testing evnornment)
 
