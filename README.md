@@ -1,0 +1,90 @@
+## DOCKER and Kurbuentues
+- Containers is a light way to "bundel" an application and it's all requirements and deploy it in various places.
+# Container Vs VMs
+- it stated with a physical server (composed of hardwares) , installed on it an OS , and some applications
+- there was a problem consists of "what if i want to deploy more than one application or service ?" does it rational to get another physical servers and pay more to get this services ? (in 60s there wasn't anyway rather this)
+- for this problem the concept of virtualization comes into the play.
+- so on the same server i can deploy more than a vm of different oss' running on it with different services
+- to acheive such a task i needed another layer above the hardware layer called "hypervisor layer" which is the interface that tells the hardware that we have now vms and each vm need a some resources ie (it's away to virtualize the hardware components to make the vms able to share thier resources)
+
+- The container takes the kernel of the os not all the user mood
+- A container bundels the applications and it's requirements
+- linux depends on the concept of containers internally in the kernel
+    - cgroups / namesspaces
+    - cgroups -> a way that linux/unix systems to monitor the resources that a process used and assigne resources       to a process
+
+    - namesspaces -> a way that monitors the hierachey of a process (sub-process) (same as cgroups) ensures that        all childs process can see each other and use eachothers
+
+- with that if you think in it you would see that linux uses this concept(starting with 1 process and that process made the os-specification [first layer] and so on....)
+
+
+- i just need the kernel not the all system (how i did that , i just dived into the kernel and i found such a similar concept that do the job)
+
+## Docker
+
+- Docker.inc has a software called docker (such as the HYPER-V in windows or the Vm-Ware)
+- There's no macosx container , there's only windows and linux containers , when installing a container it takes the host machine's kernel
+
+- > [!IMPORTANT]
+> The Docker software is available on macosx , windows , linux : but a container it self should be a linux or a windows
+> when installing docker on windows , it will search for hyper-v and asks you if you want to get a linux images , if yes it will create a linux Vm and puts all the containers inside of it (not in linux :( )
+> same for macosx (linux , windows)
+
+# docker cmds
+- docker container run -it alpine:latest sh -> interactive with alpine linux image (i = interactive , t = terminal)
+- [LOL] new linux command cat /etc/*release* get the os release info
+- docker container ls -a => shows all containers and it's status
+- docker image ls => shows all container images
+- `docker container run -d -p 80:80 nginx:latest` running a web service in the background and forwarding the port 80 (default port for web service) to port 80 on the host machine (exposing the port of the container to the host machine)
+
+- `docker container stop (container name / id)` stops the running container
+- By default docker socket listens on port 2375/tcp (http not-secure)
+
+- `docker container run -it --name 'name' -h name2` change the name of the container(--name) , change the name of the host (-h)
+- `docker container run -it ubunut:latest -c 'cmd'` excutes command inside the container
+- `docker image / container instpect [id]` returns a json file with inspection of the image / container details.
+- `docker image rm $(docker image ls -q)` removes all images from the system $(docker image ls -q) lists all images ids
+
+# Image Naming
+- hub.docker.com => default registery (cloud storage)
+- the registery consits some repos => (repositories)
+- a repo of an image contains it's all versions
+- ubuntu:latest => the repo (ubuntu) , the tag (latest) togather is the image name.
+- the official image (docker image pull (python)) well get the official image from the set.
+- to get non-official images (docker image pull [account name] [image name])
+- the latest version of some image `docker image pull python:latest` latest is not a tag name but it's a keyword.
+
+# mainfest list
+- a manifest list contains images with multiple architecture
+
+# docker vs-code extention.
+- for linux user (recommended)
+
+# Notes
+- if you delete the container any changes you made on the container will be deleted , and we will start again from the scratch.
+- stopping a container `docker container stop` sends a [SIGTERM (signal 15 in unix)](gracefull termination) signal to PID(1) which is the process of you application running on the container, if the process doesn't exit in 10 seconds it will sends [SIGKILL (signal 9 in unix)] signal.
+- kill -9 = SIGKILL , kill -15 = SIGTERM.
+
+# Examples
+ - `docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=P@ssw0rd" -e "MSSQL_PID=Express" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2019-latest` runs ms-sqlserver , -e is a environment variable (it debends on how the application inside the container is configured.)
+
+# self-healing container with restart policies.
+- check the arabigdata directory.
+
+## Containeralize your application
+- imagine we have a python container and we want to excute a script on it .... how?
+- to do so one way is to write the script on your local machine and then copy it to the container.
+- so we made file.py and save it on our local machine , then we have a python:latest container running so the command used to copy files is `docker container cp file.py [containerhash]:[outputdir]`
+- we are in the repl mode in python , how to excute the script...
+- `exec(open('path to the file.py on container').read())`
+- this approach is not effecient as each time we modefie the file we will have to copy it again to the container.
+## Container networking.
+- how to make 2 container see each other?
+- imagine we have 2 running containers , one for nginx and other for centos
+- if we tried to ping the web service (nginx) from the centos it will be okay and each of the containers will be able to see each other (As long as they're on the same host machine)
+- say that nginx container has a host name which is web , if we tried to ping or curl using this name it will not recognize it.
+- one (temp , non-optimal) solution is we can attach this parameter to the client (centos) container `docker container run -it --name client --add-host [web:ip] centos:latest`
+the --add-host will add the ip to the `/etc/hosts` file so you will be able to access it.
+
+# docker networking.
+
