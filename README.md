@@ -64,6 +64,7 @@
 - if you delete the container any changes you made on the container will be deleted , and we will start again from the scratch.
 - stopping a container `docker container stop` sends a [SIGTERM (signal 15 in unix)](gracefull termination) signal to PID(1) which is the process of you application running on the container, if the process doesn't exit in 10 seconds it will sends [SIGKILL (signal 9 in unix)] signal.
 - kill -9 = SIGKILL , kill -15 = SIGTERM.
+- when creating a container from an image (that image has many layers (read-only layers)) , the container itself is just another layer above it.
 
 # Examples
  - `docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=P@ssw0rd" -e "MSSQL_PID=Express" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2019-latest` runs ms-sqlserver , -e is a environment variable (it debends on how the application inside the container is configured.)
@@ -71,13 +72,7 @@
 # self-healing container with restart policies.
 - check the arabigdata directory.
 
-## Containeralize your application
-- imagine we have a python container and we want to excute a script on it .... how?
-- to do so one way is to write the script on your local machine and then copy it to the container.
-- so we made file.py and save it on our local machine , then we have a python:latest container running so the command used to copy files is `docker container cp file.py [containerhash]:[outputdir]`
-- we are in the repl mode in python , how to excute the script...
-- `exec(open('path to the file.py on container').read())`
-- this approach is not effecient as each time we modefie the file we will have to copy it again to the container.
+
 ## Container networking.
 - how to make 2 container see each other?
 - imagine we have 2 running containers , one for nginx and other for centos
@@ -113,3 +108,48 @@ the --add-host will add the ip to the `/etc/hosts` file so you will be able to a
 - `docker network disconnect mynet alp1` = disconnects the container from the network.
 - `docker network create --internal mynet3` = creates an internal network (the containers will be able to see eachother but they will be isolated from the outer world) (usually for testing evnornment)
 
+
+# Storage
+- storage in containers is tow types , the non-presisting data and the presisting data.
+    1. The non presisting data.
+    `ls /var/lib/docker/overlay2` = the overlay2 driver is the driver responsible for storage if we ls that path you will not find anything (if you don't have any images)
+    if you installed alpine (for instance) you will see after ls'ing that path that there's another directory inside of it, that directory is the base for the filesystem , every time your need to make a container the content of this file (alpine root directory) will be copied , now try to create a container , ls that basterd , now you will see 2 new directories ignore the -init one head to the otherone , go inside the diff folder , now this is the folder where stores each change (file creationg , deleation..etc) you did in the container , for instance you wrote an new file in the /tmp/file , in the diff dir you will find that path , so if you deleted that container everything will be removed .
+
+    - how to solve this problem (how to make a presisting data)
+2. presitance storage
+    # 1- Bind mount.
+    - you just mount a directory from the docker host (actual machine) to the docker/container path
+
+    - `docker container run -it -v $(pwd)/code:/app/code python` this command will create a python container with -it (interactive mode) , the `-v` option stands for volume which is the mount point on my host machine ($(pwd)/code) to the mount end at the container (/app/code) , please note that even if the path /app/code isn't exist it will be created automatically. this way if you edited the file on the host machine the modifications will still occure on the docker and this solve the copy approach.
+
+    # 2- docker volume
+    - docker volume is a shared mount point to all containers
+    - just like the bind mount approach but this approach is better than the bind mount as in case we want to move file from container to another , we don't have to keep track of the file path on the host machine
+
+    - `docker volume create myvol` create a volume named myvol
+    - this volume exists in the path `/var/lib/docker/volumes`
+    - `docker container run -it -v myvol:/app/code python` this will attach our volume to the mount end (/app/code) on the container.
+    - `docker volume ls` shows all volumes we have
+
+
+
+## Containeralize your application
+- imagine we have a python container and we want to excute a script on it .... how?
+- to do so one way is to write the script on your local machine and then copy it to the container.
+- so we made file.py and save it on our local machine , then we have a python:latest container running so the command used to copy files is `docker container cp file.py [containerhash]:[outputdir]`
+- we are in the repl mode in python , how to excute the script...
+- `exec(open('path to the file.py on container').read())`
+- this approach is not effecient as each time we modefie the file we will have to copy it again to the container.
+
+- after learning the bind mount it would be easy to do the devlopment process with containers.
+
+- one way to containeralize your application is the following , first pull any base image for instance python , then write your code , make your configs , then convert that container to an image ... how `docker container commit [container-name] [your new image name](try to start it with your account name on docker hub , it would be easy to upload it)`
+
+- now this image is ready to be a container and used in other environment (testing , production,..etc)
+    # example
+    - we will try to containerlize a flask application
+    - first pick a base image (ie.python)
+    - make a container , install flask frame work , install vim (for real geaks :) )
+    - then write some code , convert it to an image.
+    - `docker container run -dit -p 5000:5000 --name pyf martell0x1/pyflask:v1.0 python /app/hello.py` 
+- this way is not optimal for editing you application as with each edit you will have to make a new container image , so this will be painfull .
