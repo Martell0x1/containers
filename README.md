@@ -153,3 +153,48 @@ the --add-host will add the ip to the `/etc/hosts` file so you will be able to a
     - then write some code , convert it to an image.
     - `docker container run -dit -p 5000:5000 --name pyf martell0x1/pyflask:v1.0 python /app/hello.py` 
 - this way is not optimal for editing you application as with each edit you will have to make a new container image , so this will be painfull .
+
+    # Instruction File (docker file)
+    - `FROM` = telling the docker engine which image i will start with ex. `FROM python:latest`
+    - `WORKDIR [dir]` = create a directory and navigate to it (mkdir dirname && cd dirname) 
+    - the directory that DockerFile exist in called `build context`
+    - `COPY src dist` copy a file from the build context or any other location to the container
+    - `RUN [cmd]` = runs a command on the container.
+    - `EXPOSE [port number]` = exposes a port on the host machine.
+    - `CMD command` runs a command during the runtime of the container (the first command will be excuted in the container) (probably the only thing will be excuted)
+    - [NOTE] `Any instruction that modefies the status of the container (remove , add) makes a new layer inside the image` , the `CMD` command for instance doesn't make a new layer as it is the gateway to my application it's the process that runs my application.
+
+    - to build a container from the image , we have to excute the following command
+    - `docker build -t [tagename] [DockerFile location]` ex. `docker build -t martell0x1/pyflask:v1.0 .` , this will build the image from the DockerFile with -t option which is the tage of my image and the instruction will be in DockerFile exist in my current directory , i can even give him a github repo and tell him to get the DockerFile from it, even if the file was online and was archived it will reach it.
+
+    - how does docker container do this work?
+    - it uses intermedient containers to do the jobs ie. each instruction requires making layer it makes a container and add this layer and export this container to an image , then it makes a new container of that image and do the next steps... and so on.
+
+    - after finishing the devlopment stage , you can now make you build context (the directory that contains the Dockerfile and your code) a git repo and push it on github.
+
+# Dockerfile Deep Dive.
+- `FROM` , i can pull official /non-official , i can get the digest of an image, from another registery , private registery or scratch `FROM scratch`
+
+- `COPY` , `COPY ["Name With Spaces.py" , "/app"] this called exec way` , `COPY file /src called shell way`
+
+    # .dockerignore
+    - .dockerignore is like .gitignore (files i don't want to include in my image) same for git files i don't want to add to my repo.
+
+    - ex. `Dockerfile* *.pyc !important.pyc` this says don't include anyfiles named Dockerfile or any file ends with .pyc , except file called important.pyc
+
+- `ADD` , used to copy files , that doesn't exist in my build context ie. downloading files from internet , copy a file from tar archive .. etc , ex. `ADD <url> /app`
+
+- `SHELL` , change the shell from shell typt to another , ie. the defaul shell (sh) some people don't like dealing with and prefere using bash ... same for python from /bin/python3 to /usr/local/bin/python3 , ex. `SHELL ["/bin/bash","-c"]` | `SHELL ["/usr/local/bin/python3","-c"]`
+
+- `RUN <command> <arg1> <arg2>` , the `RUN` command work silently without inputs such as "are you sure" , "password: " ... etc , the RUN command has 2 modes , exec mode and shell mode, in docker docs , they tell you that you should always consider using the exective mode rather than the shell mode, as you don't know the behaviour of your shell 
+
+- sometimes you need to commands to print out something (IN BUILD Time) such as "cat 'file'" as it is usefull in debugging , as in complex dockerfiles you sometimes need to put some print statments to troubleshoot the problem and locate where the issue happend
+
+- `ENV` (META-DATA command , doesn't add layer) , sets some environment variables and edit the meta-data of the image (inspect) ex.`ENV SQL_SA_ACCOUNT "sa"`
+
+- `LABEL` (META-DATA command) , sets some labels for your image , ex. `LABEL author="Marwan"` , `LABEL is_dev = true is_alive = true`.
+
+- `USER` in default when creating a container the default user is the superuser of the base system (root in linux , ADMINSTRATOR in windows) , sometimes people need a new user to hold the things , but there's one small issue , most of linux base images comes with no user authentication packages , so you will not be able to create / remove / grant privellage to a user , the solution for this is to use the `USER` instruction rather than the `RUN` instruction , ex. `RUN groupadd hadoop && useradd -g hadoop hduser` , `USER hduser` ... first i created a user using the `RUN` , then i used the `USER` instruction to switch to that user. (su - hduser)
+
+- `ENTRYPOINT` , this command excutes commands ... the difference between `ENTRYPOINT , CMD , RUN` that the RUN instruction excutes commands on the build time of the image (using the intermedient (temp) containers, adding new layers) , but the CMD , ENTRYPOINT this edits the metadata of the container. (The first command that container will up and work for) ... the `ENTRYPOINT` instruction is the original command that determines the entry command for the container ... the `CMD` instruction is the arguments of the `ENTRYPOINT` , so if you want to run a command (application command) you do first the entrypoint then the argument in the cmd
+
