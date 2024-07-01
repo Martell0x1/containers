@@ -198,3 +198,7 @@ the --add-host will add the ip to the `/etc/hosts` file so you will be able to a
 
 - `ENTRYPOINT` , this command excutes commands ... the difference between `ENTRYPOINT , CMD , RUN` that the RUN instruction excutes commands on the build time of the image (using the intermedient (temp) containers, adding new layers) , but the CMD , ENTRYPOINT this edits the metadata of the container. (The first command that container will up and work for) ... the `ENTRYPOINT` instruction is the original command that determines the entry command for the container ... the `CMD` instruction is the arguments of the `ENTRYPOINT` , so if you want to run a command (application command) you do first the entrypoint then the argument in the cmd
 
+- `ARG` instruction google it.
+- You should consider searching for an image to save the build time ... for instance if you need a hadoop container that requires JDK , instead of intalling and configuring it from scratch you should consider searching for the openjdk image on docker hub.
+
+
