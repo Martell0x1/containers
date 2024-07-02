@@ -201,4 +201,8 @@ the --add-host will add the ip to the `/etc/hosts` file so you will be able to a
 - `ARG` instruction google it.
 - You should consider searching for an image to save the build time ... for instance if you need a hadoop container that requires JDK , instead of intalling and configuring it from scratch you should consider searching for the openjdk image on docker hub.
 
+- `-P` option with building means all porst are forwarded to the host.
+
+# image Registrey (pushing images to docker-hub (registrey))
+- `docker login` = login to dockerhub(simple and easy) , don't forget to create an access token on docker hub.
 
