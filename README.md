@@ -206,3 +206,38 @@ the --add-host will add the ip to the `/etc/hosts` file so you will be able to a
 # image Registrey (pushing images to docker-hub (registrey))
 - `docker login` = login to dockerhub(simple and easy) , don't forget to create an access token on docker hub.
 
+- `docker tag` = tagging an image (it's like git .. in git we say git tag to tag a commit to be a version in this case we will tag the image to be an image on docker hub ) , we change it's tag as it should be changes to fit the format on docker hub which is [account]/[imagename]:[tag]
+
+- `docker image push` = pushing an iamge to a docker hub repo , with each image it creates a new repo , when pushing an image on docker hub , if you have already pushed one and for some reason you edited it or made another tag , when pushing up the new tag it will compare the layers on dockerhub before uploading , and just uploads the new layer.
+
+# Docker Compose
+- when talking about application , we need to understand first that an application may consists of many parts , ex. a web application may have it's fornt-end , authentication , authorization , middle-ware , database .... etc, each one named a `service` , the authenticaion is a service , authorization is a service ...etc , each service consistis of many small parts each part called `microservice`... let me tell you a story ... in the past , when talking about applictaion , we have had one server has it's application on it , that one application was doing everything ... a single python file that contains the front-end , back-end , authentication , db-connections ...etc , this design called `monolithic application` , a single application that holds everything it's programmed for in one single unit, you may notice the problem here (it's very hard to extend , troubleshooting...etc), that's why the `microservices` design comes into play ,it separates an application into many services each service contains one / many `microservice (container)`
+
+- service = container + network +storage.
+- in the past there was a CORP called `orchad`(i guess) made a python software called `fig` ( which is a python module now) that applicationit made for `composing` an application's services , ex. this Dockerfile will handle this containers' network and attach that vollume to it....etc , later on docker.inc aquired that CORP , and now it have it under the name of `docker-compose`.
+
+- docker-compose `is a python package that automate the process of building an application with it's services`.
+
+- docker-compose script isn't part of docker run time it's a standalone script that cna be installed.
+
+- docker-compose needs a file to tell him what to do , this file has fixed name and fixed extention which is `docker-compose.yml`
+
+- a `yml` files is a subsequence of `json` files , it's `key-value` structured.
+
+- in `docker-compose.yml` there's four main keys `versoin , services , network , volumes` (VSNV)
+
+- `version` key is the only required key , that tells the file is compitable with which docker-compose version
+
+- `networks` key is telling dokcer engine to create netrowk , ex
+    `
+        netowrk:
+            counter-net:
+    `
+    this telling docker engine to create a network named counter-net = `docker network create counter-net`
+
+- `volumes` key is telling docker engine to create volumes , ex
+    `
+        volumes:
+            counter-vol:
+    `
+    which is equal to `docker volume create counter-vol`
