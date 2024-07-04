@@ -226,7 +226,7 @@ the --add-host will add the ip to the `/etc/hosts` file so you will be able to a
 
 - in `docker-compose.yml` there's four main keys `versoin , services , network , volumes` (VSNV)
 
-- `version` key is the only required key , that tells the file is compitable with which docker-compose version
+- `version` key is the only required key(in the past , now in docker-compose cli v2 it takes it's current version automatically) , that tells the file is compitable with which docker-compose version
 
 - `networks` key is telling dokcer engine to create netrowk , ex
     `
@@ -241,3 +241,34 @@ the --add-host will add the ip to the `/etc/hosts` file so you will be able to a
             counter-vol:
     `
     which is equal to `docker volume create counter-vol`
+
+- `services` this contains all services (that contains the microservices) that will run in my application.
+- `services:\n  web-fe:\n   build: .` this tells docker engine to build from the current building directoory (searches for the Dockerfile)
+
+- `see the docker-compose.yml file inside container-app/`
+- `docker-compose up -f [file name].yml &` composing the docker-compose.yml file
+- now let's see how things inside `docker-work/container-app` are happend inside docker engine
+- if you cuirios it's just a flask(python) application with redis to store how many times a user visited the home page.
+- if you navigate through `/var/lib/docker` which is where docker engine keeps it's configs and things on your host, `cd volumes` you will see that you have 2 volumes the one we created `container-app_counter-vol` and other one , `cd ../overlay2` you will be able to see that you have now a new network `container-app_counter-net`.
+
+- please note that working with docker-compose will name the container/network/volumes starting with the application's name (the build context directory).
+
+- please note that you can test your containers using the following command `docker exec [container's name / hash] ping -c1 google.com`.
+
+- please note that the 2 containers (in our case) can see and talk to each other (ICMP ping) with the service names(redis , web-fe) , ex `docker exec d58a ping -c1 redis`
+
+- we can do the same thing using docker-compose `docker-compose exec [service's name] ping -c1 [another service's name]`.
+
+- we can see how many services running on our docker compose using `docker-compose ps`
+
+- to remove everything from your host (instead of removing each image / each network) use this cmd `docker-compose down (within the build context)` , it will not remove volumes as it's the presitance storage i have , it will be meaningless to delete them when i shutdown the services , and it will keep the images as will , as in the next time you create your services it would be faster than pulling the images from scratch, however you can still remove everything using `docker-compose down --rmi local`
+
+- I have edited something in the docker-compose.yml , which is this is a tiny full stack code , right? , does it seem right to allow the backend service (redis) exposed to the internet ?? , ofc not , that's why we have created tow networks (frontend-net and backend-net) , the web-fe service is connected on both frontend-net (exposed) and the backend-net (internal) , while the redis service is connected just on the backend-net
+
+- that's all i know about docker-compose , it's not everything ... keep going on docks.
+
+# Docker Swarm (services on different hosts)
+- kubernates (will be discussed later)
+- the swarm in docker makes you able to deal with many services that not stored on the same host , it turns your host to a `node` in a cluster of nodes , each node can be a `manager` or a `worker` ,manager nodes are the nodes that is taking control (excute commands , edit services...etc)
+
+- the number of manager nodes is recommened to be in the range 1-7 , the number prefered to be odd not even

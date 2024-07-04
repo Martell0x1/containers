@@ -1,8 +1,25 @@
-version: "3.7"
 services:
+  web-fe:
+    build: .
+    command: python app.py
+    #container_name: web-fe # will name the container with just web-fe
+    ports: # will expose the ports
+      - target: 5000 # docker container
+        published: 5000 # host
+    networks:
+      - frontend-net
+      - backend-net
+    volumes:
+      - type: volume
+        source: counter-vol
+        target: /code
   redis:
     image: "redis:alpine"
     networks:
-      counter-net:
+      backend-net:
 networks:
+  frontend-net:
+  backend-net:
+    internal: true
 volumes:
+  counter-vol:
