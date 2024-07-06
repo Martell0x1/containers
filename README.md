@@ -1,4 +1,4 @@
-## DOCKER and Kurbuentues
+## DOCKER and Kubernetes
 - Containers is a light way to "bundel" an application and it's all requirements and deploy it in various places.
 # Container Vs VMs
 - it stated with a physical server (composed of hardwares) , installed on it an OS , and some applications
@@ -272,3 +272,95 @@ the --add-host will add the ip to the `/etc/hosts` file so you will be able to a
 - the swarm in docker makes you able to deal with many services that not stored on the same host , it turns your host to a `node` in a cluster of nodes , each node can be a `manager` or a `worker` ,manager nodes are the nodes that is taking control (excute commands , edit services...etc)
 
 - the number of manager nodes is recommened to be in the range 1-7 , the number prefered to be odd not even
+
+- a manager node can carry workload , so it works as a manager and a worker in the same time.
+- each manager node has a database that stores all the configs , it's called `etcd database`
+- `docker swarm init --advertise-addr [host ip]:2377 --listen-addr [host ip]:2377` this initializes the swarm on the host machine
+
+- The --advertise-addr flag specifies the address that will be advertised to other members of the swarm for API access and overlay networking
+
+- The --listen-addr flag specifies the address that will used to listen on the comming connections from the other nodes.
+
+- `docker swarm join-token worker` shows the token that makes you able to add aworker to the cluster
+
+- `docker swarm join-token manager` shows the token that makes you able to add manager to the cluster
+
+- suppose we have 5 VMs , each of which we have installed docker on them , the swarm logic in docker works with different containers on different docker-hosts , so we will make 3 of them managers and the 2 remainig are workers , with doing this , we can use above commands to achieve this , now let's change the think of our mind from containers to services , so we will create a service to do so we will use the follwing command...
+
+- `docker service create --name web -p 80:80 --replicas 5 nginx:latest`
+
+- we have created 5 replicas of our service , so now our 5 nodes (vms) are having the same service (container(s)), when excuting the above command , a new netowrk is generated with a new driver which is (overlay) driver that have the capapility to make each nodes see each other and make our service alive on all nodes , another network is created as well.
+
+- please not that if you tried to preform the following command on a worker machine `docker service ls` it will give you an error says that this node is a worker , this command must be excuted on a manager host
+
+- `docker service rm [name of service]` removes a service
+
+- the services are created it will start giving the replecas first on the worker nodes (so if we have 3 mangers and 2 workers and we created a service with 2 replicas the 2 workers nodes will have it)
+
+- even if the service (container) doesn't exist on the current docker host the managers will be able to view it(if you running nginx a manager will be able to veiw it in it's browser) , and that is becaouse of the `ingress` network ( the network that makes the service alive on each node)
+
+- you can change the number of replicas without deleting the service and creating it again with different number of replicas using the following command `docker service scale [name of service]=[number of new replicas]`
+    # Visualize docker-swarm (for linux users)
+    - `docker service create --name=viz -publish=8080:8080/tcp --constrain=node.role=manager --mount=type=bind,src=/var/run/docker.sock,dist=/var/run/docker.sock dockersamples/visualizer`
+
+    - this command will download and excutes a service called viz it's available on docker hub under repo called `dockersamples/visualizer`
+
+    - this will help you view and manage your nodes with docker-swarm
+    - for windows / macosx you guys have alread docker-desktop that help you.
+
+- if a service fall down on a worker node , the rest of worker nodes will carry up the service , the service's microserverices(containers) will be distributed over other worker nodes , `if the failed node recoverd and back to work (up and running) the tasks will not be redistrubted once again , to achieve so , a complix configus must be done :) , so the down machine / node will not carry any services again.`
+
+- if you want to update the image that your service live on .. `docker service update --image nignx:latest --update-perallelism 2 --update-delay 5s [service name]`
+
+- the default in update command that when updating to a new version , it will update each microservice individually (kills the first container , then make a new one...and so on) but with the flag `--update-perallelism [number]` you say please update n numbers of containers on each step.
+
+- another flag which is `--update-delay [n]s` this will wait n seconds between each step
+
+- the pervious containers (older version) will be exist and stoped , you can later on `merge` the services.
+
+- you can roll back to the previous version using `docker service rollback`
+
+    # Service Vs Container
+    - the concept of service in general said to be `statefull`
+    - statefull is meant to be the condition that this service is running depening on them
+    - a container  is `stateless` , it doesn't matter what the condition that this container follows , it's just care about whiether if the container up or down
+
+    - the message when you create a new service `service converged` means that the `desired state` met , a desired state is the original state that you created the service with , ex. if you created a serivce with 6 replicas , and a node fall down , si each node now carry 4 tasks(for instance) this is not the desired state.
+
+    - if you tried to run this command it will fail `docker service create ubuntu --replicas 2 ubunut:latest`
+
+    - why??
+    - this is because that y're running a `container` not a service ... what's inside this container?? , nothing , it's just the bash script... so when the bash script `/bin/sh or /bin/bash` excutes and finishes this container will be `stateless` it's just doing nothing ,so with that the docker engine will keep trying over and over again to create this as a service and it will fail , to understand it deeply , we have agreed that the container runs everything on `PID 1` , so when you create an ubunut service (container) what will be excuted on that PID 1 ... the bash shell , so the PID 1 will excutes `/bin/bash` and terminates , so it will keep re-upping the container over and over again (for ever) as everytime the PID 1 process terminates , so it will stuck in a loop, so you will not evern rich the `desired state` of the service . ie. `the service will never converges`.
+
+    - a service will keep that PID 1 up and running for ever (during the service life-time.)
+
+    - it's not meaningless to create a service with an os' base image , but if you even want to do so , there's a way we can do this , ... by selecting a process to be excuted for ever (infinte-loop)
+
+    - ex. `docker service create --name ubuntu --replicas 2 ubuntu:latest bash -c "while true; do echo hello ; sleep 2 ; done"`
+
+    - docker swarm has some cons , one of them is it doesn't matter what's inside the container , it only cares about wheier that PID 1 is up and running or not.
+
+    - so in general a service will be converged (running without problems) if the desired state achived (the desired state contains , networks , replicas , volumes, certicate ...etc)
+
+
+    # Docker Stack
+    - is a way that automates the deployment of the services , it works only on swarm
+    - it's a yaml file just as the compose file , it has the same four main keys(version , services ,network , volumes) , it has another one called secretes
+
+    - `docker-secret swarm object` a secret in docker is anything that you don't want it to be public (creticates , credintials , etc) , why?
+        1- to prevent being just a clear text in the file (saba7 el security awarness :) )
+        2- to make them shared amoung all nodes in docker-swarm
+    - secrets objects exists in `/run/secrets` in linux
+
+    - please look at the stack file in the directory `atsea-sample-shop-app/docker-stack.yml` , or visit the original repo [LINK](https://github.com/dockersamples/atsea-sample-shop-app)
+
+    - one last thing about docker swarm ... it's very poor and have many drawbacks (google it)
+
+    # Portainer
+    - another Gui visualization to control and manage docker swarm services (kubernates and docker solution).
+    - [LINK](https://www.portainer.io/) , google how to install and use it
+    - you can download the docker-stack file and install it , it's deployed as containers
+    - it's reliable to work with
+
+
+## Kubernetes
