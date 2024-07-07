@@ -363,4 +363,8 @@ the --add-host will add the ip to the `/etc/hosts` file so you will be able to a
     - it's reliable to work with
 
 
-## Kubernetes
+# Kubernetes (K8s)
+- Kubernetes is an open source container orchestration engine for automating deployment, scaling, and management of containerized applications. The open source project is hosted by the Cloud Native Computing Foundation.
+
+- I will study it later , going to learn about databases.
+- and i will glad to announce that we have finished this repo :)
