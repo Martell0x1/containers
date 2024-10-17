@@ -1,3 +1,13 @@
+# 🚀 **Containers: The Modern Way to Build, Ship, and Scale Applications** 🌐
+
+![img](https://sue.eu/wp-content/uploads/sites/6/2022/09/1.png)
+
+Welcome to the world of containers! Whether you're deploying a small service or managing an enterprise-level application, containers give you the power to streamline your workflow. Say goodbye to dependency issues and platform conflicts, and embrace a future where applications run consistently in any environment. Dive into Docker and Kubernetes with this repository, where simplicity meets scalability. Let's get building!
+---
+
+Welcome to the world of containers! Whether you're deploying a small service or managing an enterprise-level application, containers give you the power to streamline your workflow. Say goodbye to dependency issues and platform conflicts, and embrace a future where applications run consistently in any environment. Dive into Docker and Kubernetes with this repository, where simplicity meets scalability. Let's get building!
+
+
 ## DOCKER and Kubernetes
 - Containers is a light way to "bundel" an application and it's all requirements and deploy it in various places.
 # Container Vs VMs
